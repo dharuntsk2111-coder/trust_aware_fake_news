@@ -130,6 +130,11 @@ into memory. During that time the page shows:
 That message is correct behaviour, not an error. Wait until the terminal
 prints `pipeline loaded, model_loaded is now true`, then click Check again.
 
+Ignore the `Loading weights: 100%` progress bar — it covers only the first of
+four load steps (the stock encoder). The trained checkpoint, the embedder, the
+index and the corpus all load after it, without a progress bar. The terminal
+line above is the only reliable signal that the service is ready.
+
 ---
 
 ## 5. Check that everything works

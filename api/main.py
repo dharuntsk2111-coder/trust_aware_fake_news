@@ -27,11 +27,18 @@ from .schemas import (
     VerifyResponse,
 )
 
+# uvicorn configures its own loggers and leaves the root logger at WARNING,
+# which silently discarded every log.info below. The load progress is the only
+# way to tell when the service is ready, so it has to be visible.
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(message)s")
+
 log = logging.getLogger("api")
 
 
 async def _load_pipeline(app: FastAPI) -> None:
     """Build the Pipeline off the event loop, then publish it on app.state."""
+    log.info("loading pipeline: checkpoint, embedder, index and corpus "
+             "(about 3 minutes; the progress bar above covers only the first step)")
     try:
         app.state.pipeline = await asyncio.to_thread(Pipeline)
         log.info("pipeline loaded, model_loaded is now true")
