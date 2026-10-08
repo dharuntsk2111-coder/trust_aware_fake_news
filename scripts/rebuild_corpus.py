@@ -21,13 +21,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import faiss                                                   # noqa: E402
-import numpy as np                                             # noqa: E402
-import pandas as pd                                            # noqa: E402
-from huggingface_hub import HfApi, hf_hub_download             # noqa: E402
-from sentence_transformers import SentenceTransformer          # noqa: E402
+import faiss
+import numpy as np
+import pandas as pd
+from huggingface_hub import HfApi, hf_hub_download
+from sentence_transformers import SentenceTransformer
 
-from src.config import EMBED_MODEL, EVIDENCE_FILE, HF_REPO, HF_TOKEN, INDEX_FILE  # noqa: E402
+from src.config import EMBED_MODEL, EVIDENCE_FILE, HF_REPO, HF_TOKEN, INDEX_FILE
 
 PLACEHOLDER = "Fact-checked COVID-19 health claim (CoAID dataset)."
 OUT_DIR = Path("artifacts_rebuilt")
@@ -52,7 +52,6 @@ def main(upload: bool) -> int:
     print(f"  dropping rows ending '?'  : {int(is_question.sum()):,}")
     kept = kept[~is_question]
 
-    # Drop the old positional index so row i really is the i-th vector.
     kept = kept.reset_index(drop=True)
     print(f"final corpus: {len(kept):,} rows\n")
 
@@ -66,7 +65,6 @@ def main(upload: bool) -> int:
     ).astype("float32")
     print(f"vectors: {vectors.shape}")
 
-    # IndexFlatIP over normalised vectors == cosine similarity.
     index = faiss.IndexFlatIP(vectors.shape[1])
     index.add(vectors)
 
@@ -75,7 +73,6 @@ def main(upload: bool) -> int:
     kept.to_parquet(parquet_path, index=False)
     faiss.write_index(index, str(index_path))
 
-    # --- verification -----------------------------------------------------
     check_df = pd.read_parquet(parquet_path)
     check_index = faiss.read_index(str(index_path))
     aligned = len(check_df) == check_index.ntotal == len(kept)
@@ -94,7 +91,6 @@ def main(upload: bool) -> int:
         print("\nALIGNMENT CHECK FAILED — not uploading.")
         return 1
 
-    # Self-retrieval sanity: a row must be its own nearest neighbour.
     probe = embedder.encode([check_df.text.iloc[0]], normalize_embeddings=True).astype("float32")
     scores, idx = check_index.search(probe, 1)
     print(f"self-retrieval    : row 0 -> {int(idx[0][0])} (score {scores[0][0]:.4f})")

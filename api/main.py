@@ -27,9 +27,6 @@ from .schemas import (
     VerifyResponse,
 )
 
-# uvicorn configures its own loggers and leaves the root logger at WARNING,
-# which silently discarded every log.info below. The load progress is the only
-# way to tell when the service is ready, so it has to be visible.
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(message)s")
 
 log = logging.getLogger("api")
@@ -42,7 +39,7 @@ async def _load_pipeline(app: FastAPI) -> None:
     try:
         app.state.pipeline = await asyncio.to_thread(Pipeline)
         log.info("pipeline loaded, model_loaded is now true")
-    except Exception as exc:                      # noqa: BLE001 - reported via /health
+    except Exception as exc:
         app.state.load_error = f"{type(exc).__name__}: {exc}"
         log.exception("pipeline failed to load")
 
@@ -64,9 +61,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# The frontend is served from a different origin than the API, so CORS has to
-# be explicit. ALLOWED_ORIGINS is a comma-separated list; the default "*" keeps
-# local development working, and deployments set it to the real site origin.
 ALLOWED_ORIGINS = [
     o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()
 ]
@@ -74,7 +68,7 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=False,   # cannot be combined with allow_origins=["*"]
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -108,8 +102,6 @@ async def health(request: Request) -> HealthResponse:
 @app.post("/verify", response_model=VerifyResponse)
 async def verify(body: ClaimRequest, request: Request) -> VerifyResponse:
     pipeline = get_pipeline(request)
-    # Inference is blocking CPU work; a threadpool keeps the event loop free
-    # so /health stays responsive during a slow request.
     result = await run_in_threadpool(pipeline.verify, body.text)
     return VerifyResponse(**result)
 
@@ -117,6 +109,5 @@ async def verify(body: ClaimRequest, request: Request) -> VerifyResponse:
 @app.post("/explain", response_model=ExplainResponse)
 async def explain(body: ClaimRequest, request: Request) -> ExplainResponse:
     pipeline = get_pipeline(request)
-    # SHAP takes 15-30s on CPU, which is exactly why this must not block.
     tokens = await run_in_threadpool(pipeline.explain, body.text)
     return ExplainResponse(tokens=tokens)

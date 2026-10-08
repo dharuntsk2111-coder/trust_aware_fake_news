@@ -2,14 +2,6 @@ import { pct } from "../format.js";
 import Section from "./Section.jsx";
 import { VerdictLabel } from "./VerdictRow.jsx";
 
-/**
- * Shown only when the evidence changed the answer — the classifier predicted
- * one label and the system reports another.
- *
- * This is the point of the trust layer: the classifier alone would have
- * returned its prediction with full confidence, and the retrieved evidence
- * is what stopped it.
- */
 export default function Override({ label, confidence, verdict, trust }) {
   if (!label || label === verdict) return null;
 

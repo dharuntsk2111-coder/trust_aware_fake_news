@@ -16,13 +16,11 @@ from .config import BASE_MODEL
 class DebertaAttnPool(nn.Module):
     def __init__(self, model_name=BASE_MODEL, n_class=2, dropout=0.3):
         super().__init__()
-        # transformers 5.x: `dtype=`. If TypeError, use `torch_dtype=`.
-        # Must be float32 — fp16 weights cause dtype mismatch with the custom layers.
         try:
             self.encoder = AutoModel.from_pretrained(model_name, dtype=torch.float32)
         except TypeError:
             self.encoder = AutoModel.from_pretrained(model_name, torch_dtype=torch.float32)
-        h = self.encoder.config.hidden_size          # 768
+        h = self.encoder.config.hidden_size
         self.attn = nn.Sequential(nn.Linear(h, 128), nn.Tanh(), nn.Linear(128, 1))
         self.drop = nn.Dropout(dropout)
         self.fc   = nn.Linear(h, n_class)

@@ -4,8 +4,6 @@ import { SIM_FLOOR } from "../constants.js";
 import Section from "./Section.jsx";
 import { VerdictLabel, colourOf } from "./VerdictRow.jsx";
 
-// CoAID rows carry no real justification text, just this fixed string. It is
-// a source marker, not an explanation, so it is never shown as one.
 const COAID_PLACEHOLDER = "Fact-checked COVID-19 health claim (CoAID dataset).";
 
 function EvidenceItem({ item, position }) {
@@ -28,8 +26,6 @@ function EvidenceItem({ item, position }) {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted">
             <VerdictLabel verdict={item.verdict} small />
 
-            {/* A short meter makes the similarity readable at a glance; the
-                number stays for anyone comparing rows. */}
             <span className="flex items-center gap-2">
               <span className="relative block h-[6px] w-[72px] border border-rule bg-card">
                 <span
@@ -74,7 +70,6 @@ function EvidenceItem({ item, position }) {
   );
 }
 
-/** `bare` drops the panel so the list can sit inside another section. */
 export default function Evidence({ items, bare = false }) {
   if (!items?.length) return null;
 

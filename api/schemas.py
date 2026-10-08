@@ -7,8 +7,6 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, StringConstraints
 
-# strip_whitespace runs before the length checks, so "   " is rejected as
-# empty rather than sneaking through as 3 characters.
 ClaimText = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1, max_length=1000),
@@ -42,10 +40,8 @@ class SubClaim(BaseModel):
     label: str
     confidence: float
     trust_score: float
-    # True when strong evidence exists but mostly disagrees with the label.
     contradicted: bool = False
     attention_top: list[tuple[str, float]]
-    # Every token in sentence order; attention_top stays the sorted top 5.
     attention_all: list[tuple[str, float]]
     evidence: list[Evidence]
 
@@ -58,5 +54,4 @@ class VerifyResponse(BaseModel):
 
 
 class ExplainResponse(BaseModel):
-    # Positive value pushes toward FAKE, negative toward REAL.
     tokens: list[tuple[str, float]]

@@ -20,7 +20,7 @@ def shap_explain(text, model, tok, T_OPT, max_evals=100):
                       max_length=MAX_LEN, return_tensors="pt")
             with torch.no_grad():
                 lg = model(**enc)["logits"]
-            probs.append(torch.softmax(lg / T_OPT, 1)[0, 1].item())  # P(FAKE)
+            probs.append(torch.softmax(lg / T_OPT, 1)[0, 1].item())
         return np.array(probs)
 
     explainer = shap.Explainer(f, shap.maskers.Text(tok))

@@ -1,6 +1,3 @@
-// Fixtures captured from the real POST /verify endpoint, so the shape here is
-// exactly what the API returns. Used when VITE_USE_MOCK=true.
-
 export const MOCK_VERIFY = {
   "fake": {
     "claim": "Drinking hot water cures cancer",

@@ -18,8 +18,6 @@ class Retriever:
         self.evidence = pd.read_parquet(evidence_path)
 
     def retrieve(self, claim, k=TOP_K):
-        # The index is IndexFlatIP over normalized vectors, so inner product
-        # is cosine similarity.
         q = self.embedder.encode([claim], normalize_embeddings=True).astype("float32")
         scores, idx = self.index.search(q, k)
         out = []

@@ -3,13 +3,6 @@ import Evidence from "./Evidence.jsx";
 import Section from "./Section.jsx";
 import { VerdictLabel } from "./VerdictRow.jsx";
 
-/**
- * Only rendered when the splitter found more than one checkable part.
- *
- * Each part carries its own evidence, because a compound claim is judged
- * part by part, and hiding the non-deciding part's evidence hides half of
- * why the verdict came out the way it did.
- */
 export default function SubClaims({ subClaims, decisive }) {
   return (
     <Section title={`The claim in ${subClaims.length} parts`}>

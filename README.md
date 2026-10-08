@@ -218,8 +218,8 @@ Dockerfile      builds the API for Hugging Face Spaces
 render.yaml     describes the static site for Render
 ```
 
-`CLAUDE.md` holds the full technical specification, the reference
-implementation, and the project's known limitations.
+The thresholds and weights that decide a verdict are all in `src/config.py`.
+Section 12 lists the system's known limitations.
 
 ---
 

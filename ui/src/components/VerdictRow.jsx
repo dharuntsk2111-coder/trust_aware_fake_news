@@ -33,11 +33,6 @@ export function VerdictLabel({ verdict, small = false }) {
   );
 }
 
-/**
- * Confidence and trust on the same 0-100 scale. The distance between the two
- * fills is the point of the project: the model can be very sure while the
- * evidence does not support it.
- */
 function Bar({ name, value, fill, threshold, format }) {
   const width = `${Math.max(0, Math.min(1, value)) * 100}%`;
 
@@ -69,11 +64,7 @@ function Bar({ name, value, fill, threshold, format }) {
 }
 
 export default function VerdictRow({ verdict, confidence, trust, contradicted }) {
-  // Only call the model "confident" when it actually is: below this the
-  // sentence overstates the prediction it is describing.
   const CONFIDENT = 0.7;
-  // A contradiction is also low-trust, so it takes precedence over the
-  // weaker "unsupported" wording rather than showing both.
   const unsupported =
     confidence >= CONFIDENT && trust < TRUST_THRESHOLD && !contradicted;
 

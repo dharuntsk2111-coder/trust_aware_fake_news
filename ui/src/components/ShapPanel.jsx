@@ -3,7 +3,6 @@ import { explain } from "../api.js";
 import { mergeShapTokens } from "../format.js";
 import Section from "./Section.jsx";
 
-/** Red pushes toward FAKE, green toward REAL. Opacity tracks magnitude. */
 function ShapWord({ word, value, max }) {
   const strength = max > 0 ? Math.abs(value) / max : 0;
   const colour = value >= 0 ? "var(--color-fake)" : "var(--color-real)";
@@ -40,7 +39,6 @@ export default function ShapPanel({ text }) {
     setError(null);
     try {
       const data = await explain(text);
-      // Sub-word pieces are summed back into whole words for display.
       setTokens(mergeShapTokens(text, data.tokens));
       setState("done");
     } catch (err) {

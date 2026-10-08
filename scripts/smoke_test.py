@@ -10,23 +10,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.pipeline import Pipeline  # noqa: E402
+from src.pipeline import Pipeline
 
-TOL = 0.01  # trust tolerance; verdicts must match exactly
+TOL = 0.01
 
-# (text, expected verdict, expected trust). A trust of None checks the
-# verdict only.
 CASES = [
     ("Drinking hot water cures cancer", "FAKE", 0.8720),
     ("The government announced a new tax policy yesterday", "UNVERIFIED", 0.3168),
     ("Drinking hot water cures cancer and boosts your immune system", "FAKE", 0.8720),
-    # Regression test: the CoAID question rows ("Can eating garlic help
-    # prevent COVID-19?", labelled REAL) once made this return REAL with
-    # trust 0.9551. The model still predicts REAL, but the surviving evidence
-    # is FAKE, so the contradiction rule must cap trust and yield UNVERIFIED.
     ("Garlic prevents COVID-19 infection", "UNVERIFIED", 0.3490),
-    # Trailing punctuation must not change anything: clean_input() strips it
-    # before the text reaches the model.
     ("Drinking hot water cures cancer.", "FAKE", 0.8720),
 ]
 
@@ -71,7 +63,6 @@ def main():
         if not verdict_ok:
             failures.append(f"{text!r}: verdict {got_verdict} != {want_verdict}")
         elif not trust_ok:
-            # Not a hard failure, but worth surfacing.
             print(f"       NOTE: trust drifted more than {TOL} from the notebook\n")
 
     print("SHAP check (slow, 15-30s on CPU)...")

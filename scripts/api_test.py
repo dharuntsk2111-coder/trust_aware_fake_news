@@ -13,7 +13,7 @@ import time
 import requests
 
 BASE_URL = os.getenv("API_URL", "http://127.0.0.1:8000").rstrip("/")
-LOAD_TIMEOUT = 600   # model load is ~200s cold
+LOAD_TIMEOUT = 600
 TOL = 0.01
 
 CASES = [
@@ -66,7 +66,6 @@ def main():
     check("model_loaded is true", True)
     print()
 
-    # --- the three acceptance verdicts ------------------------------------
     for text, want_verdict, want_trust in CASES:
         r = requests.post(f"{BASE_URL}/verify", json={"text": text}, timeout=120)
         if not check(f"POST /verify 200: {text[:45]}", r.status_code == 200, f"got {r.status_code}"):
@@ -79,7 +78,6 @@ def main():
               f"{len(body['sub_claims'])} sub-claim(s)")
     print()
 
-    # --- validation: 422 on empty and oversized ---------------------------
     for label, payload in [
         ("empty string", {"text": ""}),
         ("whitespace only", {"text": "   "}),
@@ -92,7 +90,6 @@ def main():
     check("POST /explain 422 on empty string", r.status_code == 422, f"got {r.status_code}")
     print()
 
-    # --- /explain ---------------------------------------------------------
     print("POST /explain (slow, 15-30s on CPU)...")
     t0 = time.time()
     r = requests.post(f"{BASE_URL}/explain",

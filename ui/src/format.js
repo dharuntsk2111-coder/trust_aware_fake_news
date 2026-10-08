@@ -1,27 +1,14 @@
-// Display helpers. Nothing here changes model output — it only cleans up
-// artifacts of the training corpus for the screen.
-
-/**
- * LIAR2 stripped the rating words out of its justification text to stop the
- * label leaking into the input. That leaves two visible scars: orphaned
- * "We rate it ." fragments and doubled spaces where a word was removed.
- * The API also truncates to 300 characters, so text can stop mid-sentence.
- */
 export function cleanJustification(raw) {
   let t = String(raw ?? "");
 
-  // Rating fragments turn up mid-text as well as at the end, so remove the
-  // complete form globally, then any truncated tail left by the 300-char cut.
   t = t.replace(/\s*We rate\b[^.]*\.\s*/gi, " ");
   t = t.replace(/\s*We rate\b.*$/i, "");
 
-  // Close the gaps left by the removed words.
   t = t.replace(/\s+([.,;:!?])/g, "$1");
   t = t.replace(/\s{2,}/g, " ").trim();
   t = t.replace(/[\s,;:]+$/, "");
 
   if (!t) return "";
-  // Mark text the API cut at 300 characters rather than implying it ended.
   if (!/[.!?"'\u201d\u2019]$/.test(t)) t += "\u2026";
   return t;
 }
@@ -30,13 +17,6 @@ const wordKey = (w) => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
 
 export const pct = (v) => `${(v * 100).toFixed(1)}%`;
 
-/**
- * Align the token weights back onto whole words.
- *
- * attention_all is in sentence order but may contain sub-word pieces
- * ("immunity" -> "immun", "ity"), so tokens are consumed greedily until they
- * spell out the next word. A word takes the max weight of its pieces.
- */
 export function alignTokens(text, tokens = []) {
   const parts = text.split(/(\s+)/);
   const flat = (tokens ?? []).filter((t) => Array.isArray(t) && t.length === 2);
@@ -62,7 +42,6 @@ export function alignTokens(text, tokens = []) {
   });
 }
 
-/** Min-max normalise the aligned weights across the sentence. */
 export function normaliseWeights(aligned) {
   const values = aligned.map((a) => a.weight).filter((v) => v !== undefined);
   if (!values.length) return aligned.map((a) => ({ ...a, alpha: 0 }));
@@ -78,16 +57,6 @@ export function normaliseWeights(aligned) {
   });
 }
 
-/**
- * Merge SHAP tokens back into whole words, summing their values.
- *
- * The API strips the sentencepiece word-start marker and sorts by magnitude,
- * so "microchip" + "s" arrive as separate, unordered entries, and bare
- * punctuation ("-") arrives as an entry of its own. Everything is
- * reassembled against the claim text so only whole words are displayed:
- * each word consumes the tokens that spell it, longest prefix first, and
- * anything left over is folded into the word it belongs to.
- */
 export function mergeShapTokens(text, tokens = []) {
   const entries = (tokens ?? [])
     .filter((t) => Array.isArray(t) && t.length === 2)
@@ -112,21 +81,13 @@ export function mergeShapTokens(text, tokens = []) {
       remaining = remaining.slice(match.key.length);
     }
 
-    // Commit even a partial match: /explain returns only the top 8 tokens, so
-    // a word can arrive with pieces missing. Showing the whole word with the
-    // pieces we have beats printing a fragment.
     if (claimed.length) {
       merged.push([part, claimed.reduce((sum, e) => sum + e.value, 0)]);
     }
   }
 
-  // Fold the remainder in: a fragment joins the word that contains it, and a
-  // punctuation-only token joins the word before it.
   for (const e of entries) {
     if (used.has(e.id)) continue;
-    // A fragment joins the word that contains it; a punctuation-only token
-    // joins the word it punctuates ("-" belongs to "COVID-19"), falling
-    // back to the last word when nothing matches.
     let target = e.key
       ? merged.findIndex(([w]) => wordKey(w).includes(e.key))
       : merged.findIndex(([w]) => w.includes(e.word.trim()));

@@ -22,14 +22,6 @@ const highestTrust = (parts) =>
 const lowestTrust = (parts) =>
   parts.reduce((a, b) => (b.trust_score < a.trust_score ? b : a));
 
-/**
- * Which sub-claim the headline numbers describe.
- *
- * This mirrors the aggregation in verify(): FAKE reports the highest-trust
- * strong FAKE part, UNVERIFIED the highest trust, REAL the lowest. Picking
- * the first part whose label matches would show one part's confidence beside
- * another part's trust score.
- */
 function pickDecisive(result) {
   const parts = result?.sub_claims ?? [];
   if (!parts.length) return null;
@@ -74,8 +66,6 @@ export default function App() {
   const decisive = pickDecisive(result);
   const contradicted = decisive?.contradicted ?? false;
 
-  // Remount the result panels whenever the examined text changes, so a
-  // previous claim's SHAP output or open evidence row cannot linger.
   const resultKey = (result?.claim ?? "") + "|" + (decisive?.sub_claim ?? "");
 
   return (
@@ -94,8 +84,6 @@ export default function App() {
 
       <main className="shell py-8 sm:py-12">
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(300px,370px)_1fr] lg:gap-10">
-          {/* The input stays beside the results on a wide screen, so a second
-              claim can be checked without scrolling back up. */}
           <div className="space-y-6 lg:sticky lg:top-8">
             <form
               className="border border-rule bg-card px-4 py-5 sm:px-6 sm:py-6"
@@ -112,7 +100,6 @@ export default function App() {
                 value={text}
                 onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}
                 onKeyDown={(e) => {
-                  // Ctrl/Cmd+Enter submits; plain Enter keeps adding lines.
                   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
                     check(text);
@@ -180,9 +167,6 @@ export default function App() {
                   contradicted={contradicted}
                 />
 
-                {/* Only say "nothing similar was found" when that is true. A
-                    contradicted claim did find close evidence — it disagreed —
-                    and VerdictRow already explains that. */}
                 {result.verdict === "UNVERIFIED" && !contradicted && (
                   <p className="-mt-3 text-[14px] text-muted">
                     No sufficiently similar fact-checked claim was found, so the
@@ -216,8 +200,6 @@ export default function App() {
                   />
                 )}
 
-                {/* For a compound claim each part shows its own evidence inside
-                    the parts section, so this would be a duplicate. */}
                 {decisive && !multi && (
                   <Evidence key={"ev-" + resultKey} items={decisive.evidence} />
                 )}

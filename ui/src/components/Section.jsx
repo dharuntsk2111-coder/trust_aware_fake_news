@@ -1,10 +1,3 @@
-/**
- * One panel: a tinted header strip with a coloured marker and the heading,
- * a strong rule under it, then the content.
- *
- * Every section uses this, so the separation down the page is identical and
- * the headings carry the structure instead of explanatory sentences.
- */
 export default function Section({ title, colour = "var(--color-accent)", children }) {
   return (
     <section className="border border-rule bg-card">

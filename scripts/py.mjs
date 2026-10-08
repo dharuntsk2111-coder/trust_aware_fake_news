@@ -1,13 +1,3 @@
-// Cross-platform launcher for the project's virtualenv Python.
-//
-// npm runs scripts through cmd.exe on Windows and sh elsewhere, and the venv
-// layout differs too (.venv\Scripts\python.exe vs .venv/bin/python). Routing
-// every Python command through here keeps one set of npm scripts working on
-// all three platforms.
-//
-//   node scripts/py.mjs -m scripts.smoke_test
-//   node scripts/py.mjs --setup          (create the venv and install deps)
-
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -27,7 +17,6 @@ function run(cmd, args) {
 }
 
 function setup() {
-  // The Windows launcher is "py -3.11"; elsewhere it is python3.11.
   const [cmd, preArgs] = isWindows ? ["py", ["-3.11"]] : ["python3.11", []];
   console.log(`Creating .venv with ${cmd} ${preArgs.join(" ")}`.trim());
   if (run(cmd, [...preArgs, "-m", "venv", ".venv"]) !== 0) {

@@ -42,7 +42,6 @@ async function post(path, text) {
   return res.json();
 }
 
-/** Pick the fixture whose shape best matches the typed claim. */
 function mockFor(text) {
   const t = text.toLowerCase();
   if (t.includes("garlic")) return MOCK_VERIFY.contradicted;
