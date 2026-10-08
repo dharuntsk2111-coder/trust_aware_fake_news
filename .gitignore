@@ -1,0 +1,33 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Model artifacts / caches (downloaded from HF Hub, never committed)
+*.pt
+*.index
+*.parquet
+.cache/
+hf_cache/
+artifacts_rebuilt/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Node / frontend
+node_modules/
+ui/dist/
+.vite/
+*.local
+.env.local
+.env.*.local

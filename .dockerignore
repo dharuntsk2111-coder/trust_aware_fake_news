@@ -1,0 +1,28 @@
+# The image holds the Python service only.
+.git
+.gitignore
+.venv
+.env
+.env.*
+__pycache__
+**/__pycache__
+*.py[cod]
+
+# Frontend: deployed separately as a static site.
+ui
+node_modules
+package.json
+package-lock.json
+
+# Local model artifacts and rebuild output; downloaded from the Hub at runtime.
+artifacts_rebuilt
+*.pt
+*.index
+*.parquet
+
+# Docs and dev-only scripts.
+CLAUDE.md
+README.md
+notebooks
+scripts
+render.yaml

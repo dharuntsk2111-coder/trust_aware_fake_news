@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm paper page, white panels, ink text, teal accent. */
+  --color-paper: #f3f1ea;
+  --color-card: #ffffff;
+  --color-ink: #16171a;
+  --color-muted: #6c6b64;
+  --color-rule: #e0ded5;
+  --color-rule-strong: #cdcabe;
+  --color-accent: #1d5c62;
+  --color-accent-ink: #14464a;
+
+  /* Reserved for verdicts and SHAP direction. */
+  --color-fake: #ab3024;
+  --color-real: #2a6b45;
+  --color-unverified: #99700f;
+
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+  background: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Tiny uppercase labels for form fields and metric names. */
+.label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* The page column: narrow and padded on phones, 80% of the viewport on
+   desktop, capped so the text column never gets uncomfortably long. */
+.shell {
+  width: 90%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .shell { width: 80%; }
+}
+
+button, textarea {
+  font: inherit;
+}
+
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,22 @@
+{
+  "name": "trust-aware-fake-news-detection",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Monorepo root: orchestrates the FastAPI backend and the React UI.",
+  "scripts": {
+    "dev": "concurrently -n api,ui -c cyan,green --kill-others-on-fail \"npm:dev:api\" \"npm:dev:ui\"",
+    "dev:api": "node scripts/py.mjs -m uvicorn api.main:app --host 127.0.0.1 --port 8000",
+    "dev:ui": "npm --prefix ui run dev",
+    "build": "npm --prefix ui run build",
+    "preview": "npm --prefix ui run preview",
+    "test": "node scripts/py.mjs -m scripts.smoke_test",
+    "test:api": "node scripts/py.mjs -m scripts.api_test",
+    "corpus:rebuild": "node scripts/py.mjs -m scripts.rebuild_corpus",
+    "setup": "npm run setup:py && npm run setup:ui",
+    "setup:py": "node scripts/py.mjs --setup",
+    "setup:ui": "npm --prefix ui install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

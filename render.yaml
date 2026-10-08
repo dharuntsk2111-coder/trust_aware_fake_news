@@ -1,0 +1,25 @@
+# Render blueprint for the frontend only.
+#
+# The backend does not go here: Render's free web service gives 512 MB of RAM
+# and the model needs about 2 GB. It runs on a Hugging Face Docker Space
+# instead (see the Dockerfile and section 10 of the README).
+#
+# VITE_API_URL is marked sync: false, so Render asks for the value instead of
+# reading it from this file. It is baked into the bundle at build time, so the
+# site must be rebuilt if the API URL ever changes.
+
+services:
+  - type: web
+    name: fake-news-detection-ui
+    runtime: static
+    rootDir: ui
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      # Single-page app: unknown paths serve the app, not a 404.
+      - type: rewrite
+        source: /*
+        destination: /index.html
