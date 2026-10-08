@@ -263,10 +263,18 @@ Reference performance (notebook, CPU): ~1.1s single claim, ~3.2s two-part claim,
 
 Reject empty text and text over ~1000 characters with HTTP 422.
 
-## Deployment (later)
+## Deployment
 
-Backend: Hugging Face Spaces (Docker, free CPU, 16 GB RAM). Render free tier (512 MB) is too small for the model.
-Frontend: React static site on Render, calling the Spaces URL.
+**Not deployed. The project runs locally** — see the README.
+
+The model needs ~2 GB of RAM, which no free tier provides: Render's free web
+service gives 512 MB, and Hugging Face Spaces has 16 GB free but gated the
+Docker SDK behind PRO in 2026. Cloud Run fits but scales to zero, so a cold
+request re-downloads the 736 MB checkpoint.
+
+`Dockerfile` (API, CPU-only torch, port 7860) and `render.yaml` (frontend
+static site) are kept ready in the repo. A hosted API must set
+`ALLOWED_ORIGINS` to the site origin; it defaults to `*` for local use.
 
 ## Model results (for reference, do not recompute)
 

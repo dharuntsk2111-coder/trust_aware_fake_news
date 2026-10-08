@@ -1,13 +1,3 @@
----
-title: Trust-Aware Fake News Detection API
-colorFrom: gray
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
-short_description: DeBERTa + attention pooling + RAG claim verification
----
-
 # Trust-Aware Fake News Detection
 
 Checks a claim against fact-checked evidence and reports **two separate numbers**:
@@ -259,121 +249,52 @@ not shut down. Close that terminal window, or restart the machine.
 
 ---
 
-## 10. Deploying
+## 10. Deployment notes
 
-The two halves deploy to two different places, because the model needs ~2 GB of
-RAM and the free static hosts cannot provide it:
+**This project runs locally.** There is no hosted instance, and the steps in
+sections 2 to 4 are the supported way to run it.
 
-| Half | Where | Why |
-|---|---|---|
-| API (`src/`, `api/`) | Hugging Face Spaces, Docker SDK, free CPU | 16 GB RAM, and the model artifacts are already on Hugging Face |
-| Web interface (`ui/`) | Render static site, free | Plain static files after the build |
+That is a constraint of the free hosting tiers, not of the code. The model
+needs about 2 GB of RAM:
 
-`Dockerfile` builds the API. `render.yaml` describes the static site.
-
-### 10.1 API on Hugging Face Spaces
-
-1. Create the Space at <https://huggingface.co/new-space>:
-   - **SDK: Docker**, template **Blank**
-   - **Hardware: CPU basic** (free)
-   - **Public** — see the note at the end of this step
-2. In the Space, open **Settings → Variables and secrets** and add a **secret**:
-
-   | Name | Value |
-   |---|---|
-   | `HF_TOKEN` | a Hugging Face **read** token, same as your local `.env` |
-
-   The Space needs this to download the private model repo. It is a secret, not
-   a variable, so it never appears in the build log.
-3. Push this repository to the Space (replace `<user>` and `<space>`):
-
-   ```bash
-   git remote add space https://huggingface.co/spaces/<user>/<space>
-   git push space main
-   ```
-
-   When asked to authenticate, the username is your Hugging Face username and
-   the password is a Hugging Face token with **write** access.
-4. Watch **Logs** in the Space. The Docker build takes about 10 minutes the
-   first time. The service answers as soon as the build finishes, but the model
-   loads in the background for roughly 3 more minutes:
-
-   ```
-   https://<user>-<space>.hf.space/health
-   ```
-
-   `model_loaded` is `false` while loading, then `true`.
-
-> Keep the Space **public**. A browser on a different domain cannot send your
-> token, so a private Space would reject every request from the website with
-> 401. The Space exposes only the three endpoints — the model weights stay in
-> the private model repo.
-
-### 10.2 Web interface on Render
-
-1. Push the repository to GitHub first (section 11).
-2. On <https://render.com>: **New → Blueprint**, select the repository. Render
-   reads `render.yaml` and asks for one value:
-
-   | Name | Value |
-   |---|---|
-   | `VITE_API_URL` | `https://<user>-<space>.hf.space` — no trailing slash |
-
-   To do it by hand instead: **New → Static Site**, root directory `ui`, build
-   command `npm ci && npm run build`, publish directory `dist`, and add the
-   same environment variable.
-3. Deploy, then open the Render URL.
-
-> `VITE_API_URL` is compiled into the JavaScript bundle at build time, not read
-> when the page loads. If the API URL changes, the site must be **rebuilt** —
-> use **Manual Deploy → Clear build cache & deploy**.
-
-### 10.3 Restrict the API to your site
-
-With both halves live, stop allowing requests from anywhere. In the Space,
-**Settings → Variables and secrets**, add a **variable**:
-
-| Name | Value |
+| Host | Why it does not fit |
 |---|---|
-| `ALLOWED_ORIGINS` | `https://your-site.onrender.com` |
+| Render free web service | 512 MB of RAM — not enough to load the checkpoint. The 2 GB instance is a paid plan. |
+| Hugging Face Spaces | 16 GB of RAM on the free CPU tier, but as of 2026 the Docker and Gradio SDKs require a PRO subscription. Only Static Spaces are free. |
+| Google Cloud Run | Fits, but scales to zero: an idle instance re-downloads the 736 MB checkpoint and reloads it, so the first request after a pause takes around four minutes. |
 
-Restart the Space. Several origins can be listed, separated by commas. Leaving
-it unset keeps the default `*`, which is only appropriate for local
-development.
+Two config files are kept in the repository so a deployment needs no new work:
 
-### 10.4 What to expect on the free tiers
+- **`Dockerfile`** — builds the API alone, CPU-only PyTorch, listening on port
+  7860. Valid for any Docker host; it was written against the Hugging Face
+  Spaces layout, so caches are writable by uid 1000.
+- **`render.yaml`** — describes the frontend as a Render static site, with
+  `VITE_API_URL` supplied at build time.
 
-- A Space **sleeps after 48 hours** without traffic. The next visit restarts
-  it: about 4 minutes before the first answer, during which the page shows the
-  loading message.
-- The model is re-downloaded after a rebuild, which is part of that startup
-  time.
-- Nothing is stored between restarts, and nothing needs to be — the system
-  keeps no user data.
+If the API is ever hosted, set `ALLOWED_ORIGINS` on it to the website's origin.
+It defaults to `*`, which is appropriate for local use only.
 
 ---
 
-## 11. Pushing to GitHub
+## 11. The repository
 
-The repository is already initialised and committed locally. To publish it:
+The code is on GitHub at
+<https://github.com/dharuntsk2111-coder/trust_aware_fake_news> (private).
 
-```bash
-git remote add origin https://github.com/<user>/<repo>.git
-git push -u origin main
-```
+What is deliberately **not** committed:
 
-Before pushing, confirm the token file is not included:
+- `.env` — the Hugging Face token. `.env.example` is the committed template.
+- `model.pt`, `faiss.index`, `evidence.parquet` — the trained artifacts live in
+  the Hugging Face model repo and are downloaded on first run.
+- `.venv/`, `node_modules/`, `ui/dist/` — all rebuilt by `npm run setup`.
+
+To confirm the token file was never committed:
 
 ```bash
 git ls-files | grep -c "^\.env$"
 ```
 
-This must print `0`. `.env` is listed in `.gitignore`; `.env.example` is the
-one that gets committed.
-
-The model artifacts (`model.pt`, `faiss.index`, `evidence.parquet`) are also
-excluded — they live in the Hugging Face model repo and are downloaded on
-first run.
+This must print `0`.
 
 ---
 

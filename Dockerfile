@@ -1,4 +1,8 @@
-# Backend image for Hugging Face Spaces (Docker SDK, free CPU tier).
+# Backend image for the API. Kept ready but not in use — the project runs
+# locally; see "Deployment notes" in the README.
+#
+# Written against the Hugging Face Spaces layout (port 7860, caches writable by
+# uid 1000), which also makes it valid for any other Docker host.
 #
 # Only the Python half of the project goes in — the React UI is deployed
 # separately as a static site. Python 3.11 matches the local runtime, which is

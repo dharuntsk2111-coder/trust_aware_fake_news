@@ -1,8 +1,10 @@
 # Render blueprint for the frontend only.
 #
-# The backend does not go here: Render's free web service gives 512 MB of RAM
-# and the model needs about 2 GB. It runs on a Hugging Face Docker Space
-# instead (see the Dockerfile and section 10 of the README).
+# Kept ready but not in use: the project runs locally. See "Deployment notes"
+# in the README for why no free tier fits.
+#
+# The backend could never go here regardless — Render's free web service gives
+# 512 MB of RAM and the model needs about 2 GB. The Dockerfile covers the API.
 #
 # VITE_API_URL is marked sync: false, so Render asks for the value instead of
 # reading it from this file. It is baked into the bundle at build time, so the
