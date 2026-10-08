@@ -273,8 +273,9 @@ Docker SDK behind PRO in 2026. Cloud Run fits but scales to zero, so a cold
 request re-downloads the 736 MB checkpoint.
 
 `Dockerfile` (API, CPU-only torch, port 7860) and `render.yaml` (frontend
-static site) are kept ready in the repo. A hosted API must set
-`ALLOWED_ORIGINS` to the site origin; it defaults to `*` for local use.
+static site) are kept ready in the repo, and README section 10 is the full
+walkthrough for whoever hosts it. A hosted API must set `ALLOWED_ORIGINS` to
+the site origin; it defaults to `*` for local use.
 
 ## Model results (for reference, do not recompute)
 

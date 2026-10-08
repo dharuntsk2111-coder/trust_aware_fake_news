@@ -249,30 +249,150 @@ not shut down. Close that terminal window, or restart the machine.
 
 ---
 
-## 10. Deployment notes
+## 10. Deployment
 
-**This project runs locally.** There is no hosted instance, and the steps in
-sections 2 to 4 are the supported way to run it.
+**This project is not currently hosted** — sections 2 to 4 are the supported
+way to run it. Everything needed to host it is in the repository, and this
+section is the walkthrough.
 
-That is a constraint of the free hosting tiers, not of the code. The model
-needs about 2 GB of RAM:
+The reason it runs locally is the model's ~2 GB of RAM, which no free tier
+covers:
 
 | Host | Why it does not fit |
 |---|---|
 | Render free web service | 512 MB of RAM — not enough to load the checkpoint. The 2 GB instance is a paid plan. |
-| Hugging Face Spaces | 16 GB of RAM on the free CPU tier, but as of 2026 the Docker and Gradio SDKs require a PRO subscription. Only Static Spaces are free. |
+| Hugging Face Spaces | 16 GB of RAM on the free CPU tier, but as of 2026 the Docker and Gradio SDKs require a PRO subscription (~$9/month). Only Static Spaces are free. |
 | Google Cloud Run | Fits, but scales to zero: an idle instance re-downloads the 736 MB checkpoint and reloads it, so the first request after a pause takes around four minutes. |
 
-Two config files are kept in the repository so a deployment needs no new work:
+Two config files cover the two halves:
 
-- **`Dockerfile`** — builds the API alone, CPU-only PyTorch, listening on port
-  7860. Valid for any Docker host; it was written against the Hugging Face
-  Spaces layout, so caches are writable by uid 1000.
-- **`render.yaml`** — describes the frontend as a Render static site, with
-  `VITE_API_URL` supplied at build time.
+- **`Dockerfile`** — the API alone: CPU-only PyTorch, listening on port 7860,
+  caches writable by uid 1000. Valid for any Docker host.
+- **`render.yaml`** — the frontend as a Render static site.
 
-If the API is ever hosted, set `ALLOWED_ORIGINS` on it to the website's origin.
-It defaults to `*`, which is appropriate for local use only.
+### 10.1 Test the API container locally first
+
+Free, and it catches problems before any host is involved:
+
+```bash
+docker build -t fake-news-api .
+docker run --rm -p 7860:7860 -e HF_TOKEN=hf_your_real_token fake-news-api
+```
+
+Then open <http://127.0.0.1:7860/docs>. The model loads in the background for
+about three minutes; `/health` reports `model_loaded` as `false` until it is
+ready.
+
+Pass the token with `-e`, never by copying `.env` into the image.
+
+### 10.2 API on Hugging Face Spaces
+
+Needs a **PRO** subscription, because the Docker SDK is no longer free. The
+model artifacts already live on Hugging Face, so the checkpoint downloads
+inside their own network — this is the fastest host to start up.
+
+1. Create the Space at <https://huggingface.co/new-space>:
+   - **SDK: Docker**, template **Blank**
+   - **Hardware: CPU basic** (2 vCPU, 16 GB, free)
+   - **Public** — see the note below
+2. Add the token under **Settings → Variables and secrets → New secret**:
+
+   | Name | Value |
+   |---|---|
+   | `HF_TOKEN` | a Hugging Face **read** token |
+
+   It must be a **secret**, not a variable. Variables are public and are baked
+   into the build, which would expose the token.
+3. A Space reads its configuration from front matter at the top of
+   `README.md`, which this repo does not carry. Add it on a branch kept for
+   the Space:
+
+   ```yaml
+   ---
+   title: Trust-Aware Fake News Detection API
+   colorFrom: gray
+   colorTo: green
+   sdk: docker
+   app_port: 7860
+   pinned: false
+   ---
+   ```
+
+4. Push to the Space:
+
+   ```bash
+   git remote add space https://huggingface.co/spaces/<user>/<space>
+   git push space main
+   ```
+
+   When asked to authenticate, the username is your Hugging Face username and
+   the password is a token with **write** access.
+5. Watch the **Logs** tab. The Docker build takes about 10 minutes the first
+   time, then the model loads for ~3 minutes more. When the log shows
+   `pipeline loaded, model_loaded is now true`, check:
+
+   ```
+   https://<user>-<space>.hf.space/health
+   ```
+
+> Keep the Space **public**. A visitor's browser cannot attach your token, so a
+> private Space would reject every request from the website with 401. Only the
+> three endpoints are exposed — the weights stay in the private model repo.
+
+### 10.3 API on any other Docker host
+
+The same image runs anywhere that offers 2 GB of RAM. Set `HF_TOKEN` in the
+host's environment, and point the host at port 7860 — or override it, since
+the port comes from the `CMD` line in the `Dockerfile`.
+
+On a plain virtual machine (Oracle Cloud's always-free tier is large enough),
+install Docker, clone the repo, and run the same two commands as section 10.1
+with `-d --restart unless-stopped` instead of `--rm`.
+
+### 10.4 Frontend on Render
+
+1. On <https://render.com>: **New → Blueprint**, select the repository. Render
+   reads `render.yaml` and asks for one value:
+
+   | Name | Value |
+   |---|---|
+   | `VITE_API_URL` | the API's public URL, no trailing slash |
+
+   By hand instead: **New → Static Site**, root directory `ui`, build command
+   `npm ci && npm run build`, publish directory `dist`, same variable.
+2. Deploy, then open the Render URL.
+
+Render needs its GitHub App authorised on the repository. On a repo you do not
+own, an administrator has to approve that — otherwise build the site locally
+with `npm run build` and upload `ui/dist` to any static host (Netlify Drop,
+Cloudflare Pages and GitHub Pages all accept a plain folder).
+
+> `VITE_API_URL` is compiled into the bundle at build time, not read when the
+> page loads. If the API URL changes, **rebuild** the site — on Render,
+> **Manual Deploy → Clear build cache & deploy**.
+
+### 10.5 Restrict the API to your site
+
+With both halves live, stop accepting requests from anywhere. Set this on the
+API host (a Space **variable**, not a secret — it is not sensitive):
+
+| Name | Value |
+|---|---|
+| `ALLOWED_ORIGINS` | `https://your-site.onrender.com` |
+
+Restart the service. Several origins can be listed, comma-separated. Left
+unset it defaults to `*`, which is appropriate for local development only.
+
+### 10.6 What to expect once hosted
+
+- A free Hugging Face Space **sleeps after 48 hours** without traffic. The next
+  visit restarts it: about four minutes before the first answer, during which
+  the page shows the loading message. Open the site ten minutes before any
+  demo.
+- The checkpoint is downloaded again after a rebuild, which is part of that
+  startup time.
+- Nothing is stored between restarts, and nothing needs to be — the system
+  keeps no user data.
 
 ---
 
